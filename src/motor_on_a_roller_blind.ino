@@ -45,7 +45,7 @@ char mqtt_pwd[40];                //WIFI config: MQTT server password (optional)
 String outputTopic; //MQTT topic for sending messages
 String inputTopic;  //MQTT topic for listening
 boolean mqttActive = true;
-char config_name[40];               //WIFI config: Bonjour name of device
+char config_name[40] = "blinds";    //WIFI config: Bonjour name of device
 char config_rotation[40] = "false"; //WIFI config: Detault rotation is CCW
 
 String action;              //Action manual/auto
@@ -281,8 +281,8 @@ void print(String str) {
 
 void setup(void)
 {
-  // Serial.begin(115200);
-  Serial.begin(76800);
+  Serial.begin(115200);
+  // Serial.begin(76800);
 
   setupGPIOandMotors(io, print);
 
