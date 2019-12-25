@@ -4,7 +4,7 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
-#include <Stepper_28BYJ_48.h>
+// #include <Stepper_28BYJ_48.h>
 #include <WebSocketsServer.h>
 #include <WiFiClient.h>
 #include <WiFiManager.h>
@@ -12,6 +12,10 @@
 #include "FS.h"
 #include "index_html.h"
 #include "NidayandHelper.h"
+#include <SparkFunSX1509.h>
+#include "GPIOE.h"
+
+SX1509 io;
 
 //--------------- CHANGE PARAMETERS ------------------
 //Configure Default Settings for Access Point logon
@@ -55,7 +59,7 @@ bool shouldSaveConfig = false; //Used for WIFI Manager callback to save paramete
 boolean initLoop = true;       //To enable actions first time the loop is run
 boolean ccw = true;            //Turns counter clockwise to lower the curtain
 
-Stepper_28BYJ_48 small_stepper(D1, D3, D2, D4); //Initiate stepper driver
+// Stepper_28BYJ_48 small_stepper(D1, D3, D2, D4); //Initiate stepper driver
 
 ESP8266WebServer server(80);                       // TCP server at port 80 will respond to HTTP requests
 WebSocketsServer webSocket = WebSocketsServer(81); // WebSockets will respond on port 81
@@ -271,10 +275,16 @@ void handleNotFound()
   server.send(404, "text/plain", message);
 }
 
+void print(String str) {
+  Serial.println(str);
+}
+
 void setup(void)
 {
   // Serial.begin(115200);
   Serial.begin(76800);
+
+  setupGPIOandMotors(io, print);
 
   delay(100);
   Serial.print(F("Starting now\n"));
@@ -405,9 +415,15 @@ void setup(void)
 
   //Set rotation direction of the blinds
   if (String(config_rotation) == "false")
+  {
     ccw = true;
+    motors.ccw = true;
+  }
   else
+  {
     ccw = false;
+    motors.ccw = false;
+  }
 
   //Update webpage
   INDEX_HTML.replace("{VERSION}", "V" + version);
@@ -468,7 +484,8 @@ void loop(void)
     while (!digitalRead(btndn) && currentPosition > 0)
     {
       Serial.println(F("Moving down"));
-      small_stepper.step(ccw ? -1 : 1);
+      motors.moveDown();
+      // small_stepper.step(ccw ? -1 : 1);
       currentPosition = currentPosition - 1;
       yield();
       delay(1);
@@ -477,7 +494,8 @@ void loop(void)
     while (!digitalRead(btnup) && currentPosition < maxPosition)
     {
       Serial.println(F("Moving up"));
-      small_stepper.step(ccw ? 1 : -1);
+      motors.moveUp();
+      // small_stepper.step(ccw ? 1 : -1);
       currentPosition = currentPosition + 1;
       yield();
       delay(1);
@@ -539,13 +557,15 @@ void loop(void)
     if (currentPosition > path)
     {
       Serial.println(F("Moving down"));
-      small_stepper.step(ccw ? -1 : 1);
+      motors.moveDown();
+      // small_stepper.step(ccw ? -1 : 1);
       currentPosition = currentPosition - 1;
     }
     else if (currentPosition < path)
     {
       Serial.println(F("Moving up"));
-      small_stepper.step(ccw ? 1 : -1);
+      motors.moveUp();
+      // small_stepper.step(ccw ? 1 : -1);
       currentPosition = currentPosition + 1;
     }
     else
@@ -564,7 +584,10 @@ void loop(void)
   {
 
     //Manually running the blind
-    small_stepper.step(ccw ? path : -path);
+    // small_stepper.step(ccw ? path : -path);
+    if(path > 0) motors.moveDown();
+    else motors.moveUp();
+
     currentPosition = currentPosition + path;
     Serial.println(F("Moving motor manually"));
   }
