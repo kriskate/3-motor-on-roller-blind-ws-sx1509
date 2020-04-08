@@ -317,7 +317,7 @@ void setup(void)
 
   //reset settings - for testing
   //clean FS, for testing
-  //helper.resetsettings(wifiManager);
+  helper.resetsettings(wifiManager);
 
   wifiManager.setSaveConfigCallback(saveConfigCallback);
   //add all your parameters here
